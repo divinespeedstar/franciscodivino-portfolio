@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 540" role="img" aria-labelledby="title desc">
+  <title id="title">Email marketing funnel</title>
+  <desc id="desc">Email marketing funnel with automation stages.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#161a22"/>
+      <stop offset=".52" stop-color="#192d39"/>
+      <stop offset="1" stop-color="#42370f"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7b2ff"/>
+      <stop offset=".5" stop-color="#76e4f7"/>
+      <stop offset="1" stop-color="#ffe259"/>
+    </linearGradient>
+  </defs>
+  <rect width="840" height="540" rx="38" fill="url(#bg)"/>
+  <rect x="68" y="66" width="704" height="408" rx="34" fill="#0c0c0c" opacity=".72" stroke="#d7e2ea" stroke-opacity=".2"/>
+  <text x="108" y="142" fill="#d7e2ea" font-family="Arial, sans-serif" font-size="34" font-weight="900">E-mail marketing IA</text>
+  <text x="108" y="184" fill="#d7e2ea" opacity=".64" font-family="Arial, sans-serif" font-size="20">captura, nutre, recupera e vende</text>
+  <path d="M168 256 H676 L596 354 H248 Z" fill="url(#gold)" opacity=".9"/>
+  <path d="M248 384 H596 L532 438 H312 Z" fill="#ffffff" opacity=".13"/>
+  <rect x="116" y="242" width="118" height="72" rx="18" fill="#ffffff" opacity=".12"/>
+  <rect x="604" y="242" width="118" height="72" rx="18" fill="#ffffff" opacity=".12"/>
+  <text x="142" y="286" fill="#ffffff" font-family="Arial, sans-serif" font-size="22" font-weight="800">lead</text>
+  <text x="632" y="286" fill="#ffffff" font-family="Arial, sans-serif" font-size="22" font-weight="800">venda</text>
+</svg>

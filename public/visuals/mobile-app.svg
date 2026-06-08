@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 540" role="img" aria-labelledby="title desc">
+  <title id="title">Mobile app system</title>
+  <desc id="desc">Mobile app screens connected to a business dashboard.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#081827"/>
+      <stop offset=".5" stop-color="#10264e"/>
+      <stop offset="1" stop-color="#4b0e58"/>
+    </linearGradient>
+    <linearGradient id="cool" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#00d4ff"/>
+      <stop offset="1" stop-color="#9d6bff"/>
+    </linearGradient>
+  </defs>
+  <rect width="840" height="540" rx="38" fill="url(#bg)"/>
+  <rect x="82" y="72" width="676" height="396" rx="38" fill="#0c0c0c" opacity=".72" stroke="#d7e2ea" stroke-opacity=".2"/>
+  <rect x="118" y="108" width="176" height="320" rx="34" fill="#111820" stroke="#00d4ff" stroke-opacity=".5"/>
+  <rect x="146" y="148" width="120" height="18" rx="9" fill="#d7e2ea" opacity=".5"/>
+  <rect x="146" y="202" width="120" height="90" rx="22" fill="url(#cool)"/>
+  <rect x="146" y="320" width="54" height="54" rx="18" fill="#ffffff" opacity=".14"/>
+  <rect x="212" y="320" width="54" height="54" rx="18" fill="#ffffff" opacity=".14"/>
+  <text x="344" y="154" fill="#d7e2ea" font-family="Arial, sans-serif" font-size="34" font-weight="900">Apps sob medida</text>
+  <text x="344" y="198" fill="#d7e2ea" opacity=".66" font-family="Arial, sans-serif" font-size="20">mobile, web, dashboards e sistemas internos</text>
+  <rect x="344" y="248" width="348" height="42" rx="21" fill="#ffffff" opacity=".1"/>
+  <rect x="344" y="320" width="250" height="42" rx="21" fill="#ffffff" opacity=".1"/>
+  <rect x="344" y="248" width="256" height="42" rx="21" fill="url(#cool)" opacity=".88"/>
+  <rect x="344" y="320" width="172" height="42" rx="21" fill="url(#cool)" opacity=".66"/>
+  <text x="344" y="420" fill="#ffffff" font-family="Arial, sans-serif" font-size="46" font-weight="900">F.D systems</text>
+</svg>
