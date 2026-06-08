@@ -28,9 +28,9 @@ import {
 const BRAND = {
   name: "Meu Portfolio",
   person: "Francisco Divino",
-  handle: "@franciscodivino",
+  handle: "@franciscodivinoo",
   email: "contato@franciscodivino.com",
-  whatsapp: "https://wa.me/5500000000000",
+  whatsapp: "https://wa.me/91984105852",
 };
 
 const marqueeItems = [
@@ -207,6 +207,16 @@ const navItems = [
   ["Contato", "#contato"],
 ];
 
+const floatingBrands = [
+  { label: "Google Ads", image: "/visuals/brands/google-ads.png", className: "google" },
+  { label: "Meta Ads", image: "/visuals/brands/meta-ads.png", className: "meta" },
+  { label: "TikTok Ads", image: "/visuals/brands/tiktok-ads.png", className: "tiktok" },
+  { label: "ChatGPT", image: "/visuals/brands/chatgpt.png", className: "chatgpt" },
+  { label: "Claude", image: "/visuals/brands/claude.png", className: "claude" },
+  { label: "Gemini", image: "/visuals/brands/gemini.png", className: "gemini" },
+  { label: "iFood", image: "/visuals/brands/ifood.png", className: "ifood" },
+];
+
 type FadeInProps<T extends ElementType> = {
   as?: T;
   children: ReactNode;
@@ -253,36 +263,41 @@ function Magnet({
   strength?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const touchingRef = useRef(false);
   const [style, setStyle] = useState({
     transform: "translate3d(0, 0, 0)",
     transition: "transform 0.6s ease-in-out",
   });
 
   useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      const element = ref.current;
+    const element = ref.current;
 
-      if (!element) {
-        return;
-      }
+    if (!element) {
+      return;
+    }
 
+    const reset = () => {
+      setStyle({
+        transform: "translate3d(0, 0, 0)",
+        transition: "transform 0.6s ease-in-out",
+      });
+    };
+
+    const applyPointer = (clientX: number, clientY: number) => {
       const rect = element.getBoundingClientRect();
       const isInside =
-        event.clientX > rect.left - padding &&
-        event.clientX < rect.right + padding &&
-        event.clientY > rect.top - padding &&
-        event.clientY < rect.bottom + padding;
+        clientX > rect.left - padding &&
+        clientX < rect.right + padding &&
+        clientY > rect.top - padding &&
+        clientY < rect.bottom + padding;
 
       if (!isInside) {
-        setStyle({
-          transform: "translate3d(0, 0, 0)",
-          transition: "transform 0.6s ease-in-out",
-        });
+        reset();
         return;
       }
 
-      const x = (event.clientX - (rect.left + rect.width / 2)) / strength;
-      const y = (event.clientY - (rect.top + rect.height / 2)) / strength;
+      const x = (clientX - (rect.left + rect.width / 2)) / strength;
+      const y = (clientY - (rect.top + rect.height / 2)) / strength;
 
       setStyle({
         transform: `translate3d(${x}px, ${y}px, 0)`,
@@ -290,12 +305,60 @@ function Magnet({
       });
     };
 
+    const handleMouseMove = (event: MouseEvent) => {
+      if (touchingRef.current) {
+        return;
+      }
+
+      applyPointer(event.clientX, event.clientY);
+    };
+
+    const handleTouchStart = (event: TouchEvent) => {
+      touchingRef.current = true;
+      const touch = event.touches[0];
+
+      if (touch) {
+        applyPointer(touch.clientX, touch.clientY);
+      }
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      const touch = event.touches[0];
+
+      if (!touch) {
+        return;
+      }
+
+      event.preventDefault();
+      applyPointer(touch.clientX, touch.clientY);
+    };
+
+    const handleTouchEnd = () => {
+      touchingRef.current = false;
+      reset();
+    };
+
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    return () => window.removeEventListener("mousemove", handleMouseMove);
+    element.addEventListener("touchstart", handleTouchStart, { passive: true });
+    element.addEventListener("touchmove", handleTouchMove, { passive: false });
+    element.addEventListener("touchend", handleTouchEnd);
+    element.addEventListener("touchcancel", handleTouchEnd);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      element.removeEventListener("touchstart", handleTouchStart);
+      element.removeEventListener("touchmove", handleTouchMove);
+      element.removeEventListener("touchend", handleTouchEnd);
+      element.removeEventListener("touchcancel", handleTouchEnd);
+    };
   }, [padding, strength]);
 
   return (
-    <div ref={ref} style={{ ...style, willChange: "transform" }}>
+    <div
+      ref={ref}
+      className="magnet-root"
+      style={{ ...style, willChange: "transform" }}
+    >
       {children}
     </div>
   );
@@ -324,36 +387,43 @@ function LiveProjectButton() {
   );
 }
 
+function FloatingBrandBadge({
+  label,
+  image,
+  className,
+}: {
+  label: string;
+  image: string;
+  className: string;
+}) {
+  return (
+    <div
+      className={`floating-brand floating-brand--${className}`}
+      title={label}
+      aria-label={label}
+    >
+      <img className="floating-brand__icon" src={image} alt="" />
+    </div>
+  );
+}
+
 function HeroVisual() {
   return (
     <div className="hero-visual">
       <div className="hero-visual__ring hero-visual__ring--one" />
       <div className="hero-visual__ring hero-visual__ring--two" />
-      <div className="hero-visual__device">
-        <div className="hero-visual__topbar">
-          <span />
-          <span />
-          <span />
-        </div>
-        <div className="hero-visual__content">
-          <div className="hero-visual__stat">
-            <span>Ecossistema IA</span>
-            <strong>F.D</strong>
-          </div>
-          <div className="hero-visual__chart">
-            <span style={{ height: "38%" }} />
-            <span style={{ height: "64%" }} />
-            <span style={{ height: "48%" }} />
-            <span style={{ height: "82%" }} />
-            <span style={{ height: "72%" }} />
-            <span style={{ height: "96%" }} />
-          </div>
-          <div className="hero-visual__grid">
-            <span>Apps mobile</span>
-            <span>WhatsApp IA</span>
-            <span>Delivery</span>
-            <span>Automação</span>
-          </div>
+      {floatingBrands.map((brand) => (
+        <FloatingBrandBadge key={brand.label} {...brand} />
+      ))}
+      <div className="hero-photo-frame">
+        <img
+          className="hero-photo-frame__image"
+          src="/visuals/francisco-divino.jpg"
+          alt="Retrato de Francisco Divino"
+        />
+        <div className="hero-photo-frame__overlay">
+          <span>Francisco Divino</span>
+          <strong>Marketing + IA + Sistemas</strong>
         </div>
       </div>
       <div className="hero-visual__badge hero-visual__badge--left">
@@ -370,7 +440,7 @@ function HeroVisual() {
 
 function HeroSection() {
   return (
-    <section className="relative flex h-screen min-h-[720px] flex-col overflow-x-clip bg-[#0C0C0C]">
+    <section className="hero-section relative flex h-screen min-h-[720px] flex-col overflow-x-clip bg-[#0C0C0C]">
       <FadeIn
         as="nav"
         className="relative z-30 flex items-center justify-between px-6 pt-6 text-sm font-medium uppercase tracking-wider text-[#D7E2EA] md:px-10 md:pt-8 md:text-lg lg:text-[1.4rem]"
@@ -399,14 +469,12 @@ function HeroSection() {
         </h1>
       </FadeIn>
 
-      <FadeIn
-        className="absolute left-1/2 top-1/2 z-10 w-[310px] -translate-x-1/2 -translate-y-1/2 sm:w-[420px] md:w-[540px] lg:w-[650px]"
-        delay={0.6}
-        y={30}
-      >
-        <Magnet>
-          <HeroVisual />
-        </Magnet>
+      <FadeIn delay={0.6} y={30}>
+        <div className="hero-visual-slot">
+          <Magnet padding={120} strength={2.5}>
+            <HeroVisual />
+          </Magnet>
+        </div>
       </FadeIn>
 
       <div className="relative z-30 mt-auto flex items-end justify-between gap-6 px-6 pb-7 sm:pb-8 md:px-10 md:pb-10">
@@ -417,7 +485,7 @@ function HeroSection() {
           y={20}
         >
           Francisco Divino une marketing digital, IA, apps e automações para
-          vender mais na nova era.
+          vender mais na era digital.
         </FadeIn>
         <FadeIn delay={0.5} y={20}>
           <ContactButton />
@@ -596,7 +664,7 @@ function AboutSection() {
           F. Divino
         </FadeIn>
         <div className="flex flex-col items-center gap-16 sm:gap-20 md:gap-24">
-          <AnimatedText text="Francisco Divino é um especialista da nova era: cria apps, sistemas, automações com IA e estratégias completas de marketing digital. A diferença está em unir tecnologia, copy, tráfego, WhatsApp, e-mail, dados e operação para dar mais velocidade, clareza e chance real de resultado para qualquer negócio." />
+          <AnimatedText text="Francisco Divino é um especialista da era digital: cria apps, sistemas, automações com IA e estratégias completas de marketing digital. A diferença está em unir tecnologia, copy, tráfego, WhatsApp, e-mail, dados e operação para dar mais velocidade, clareza e chance real de resultado para qualquer negócio." />
           <ContactButton label="Falar com Francisco" />
         </div>
       </div>
@@ -807,9 +875,14 @@ function ContactSection() {
       <footer className="mx-auto mt-20 flex max-w-7xl flex-col justify-between gap-4 border-t border-black/15 pt-8 text-sm uppercase tracking-[0.24em] opacity-60 sm:flex-row">
         <span>{BRAND.name}</span>
         <span>{BRAND.person} / IA / Apps / Marketing</span>
-        <span className="flex items-center gap-2">
+        <a
+          className="flex items-center gap-2 transition-opacity hover:opacity-70"
+          href="https://instagram.com/franciscodivinoo"
+          target="_blank"
+          rel="noreferrer"
+        >
           <Instagram size={16} /> {BRAND.handle}
-        </span>
+        </a>
       </footer>
     </section>
   );

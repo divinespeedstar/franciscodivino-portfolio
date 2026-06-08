@@ -116,6 +116,22 @@ a {
   transform: translateY(-2px);
 }
 
+.magnet-root {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.hero-visual-slot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 10;
+  width: 650px;
+  max-width: 92vw;
+  transform: translate(-50%, -50%);
+}
+
 .hero-visual {
   position: relative;
   aspect-ratio: 1 / 1;
@@ -157,6 +173,148 @@ a {
     0 42px 90px rgba(0, 0, 0, 0.55),
     0 0 80px rgba(182, 0, 168, 0.24);
   transform: rotateX(9deg) rotateY(-12deg) rotateZ(2deg);
+}
+
+.hero-photo-frame {
+  position: absolute;
+  inset: 8% 12% 4%;
+  overflow: hidden;
+  border: 2px solid rgba(215, 226, 234, 0.78);
+  border-radius: clamp(28px, 6vw, 62px);
+  background:
+    linear-gradient(140deg, rgba(255, 255, 255, 0.15), transparent 35%),
+    radial-gradient(circle at 16% 12%, rgba(204, 255, 0, 0.22), transparent 28%),
+    radial-gradient(circle at 84% 14%, rgba(182, 0, 168, 0.28), transparent 30%),
+    #101015;
+  box-shadow:
+    0 48px 100px rgba(0, 0, 0, 0.62),
+    0 0 80px rgba(182, 0, 168, 0.26),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  transform: rotateX(9deg) rotateY(-12deg) rotateZ(2deg);
+  transform-style: preserve-3d;
+}
+
+.hero-photo-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.26), transparent 34%),
+    linear-gradient(0deg, rgba(12, 12, 12, 0.78), transparent 34%);
+  pointer-events: none;
+}
+
+.hero-photo-frame__image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: 52% 33%;
+  filter: saturate(0.94) contrast(1.04);
+  transform: scale(1.03);
+}
+
+.hero-photo-frame__overlay {
+  position: absolute;
+  left: clamp(18px, 4vw, 34px);
+  right: clamp(18px, 4vw, 34px);
+  bottom: clamp(18px, 4vw, 34px);
+  z-index: 3;
+  border: 1px solid rgba(215, 226, 234, 0.18);
+  border-radius: 22px;
+  background: rgba(12, 12, 12, 0.58);
+  padding: clamp(14px, 2.2vw, 22px);
+  backdrop-filter: blur(16px);
+}
+
+.hero-photo-frame__overlay span,
+.hero-photo-frame__overlay strong {
+  display: block;
+  text-transform: uppercase;
+}
+
+.hero-photo-frame__overlay span {
+  color: rgba(215, 226, 234, 0.62);
+  font-size: clamp(0.62rem, 1.3vw, 0.85rem);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+.hero-photo-frame__overlay strong {
+  margin-top: 7px;
+  color: #fff;
+  font-size: clamp(1rem, 2.5vw, 1.75rem);
+  font-weight: 900;
+  line-height: 0.95;
+}
+
+.floating-brand {
+  position: absolute;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border: 1px solid rgba(215, 226, 234, 0.24);
+  border-radius: 50%;
+  background: rgba(12, 12, 12, 0.78);
+  box-shadow:
+    0 22px 70px rgba(0, 0, 0, 0.42),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  padding: 6px;
+  backdrop-filter: blur(18px);
+  animation: floatBadge 5.6s ease-in-out infinite;
+}
+
+.floating-brand__icon {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.floating-brand--google {
+  left: -8%;
+  top: 8%;
+}
+
+.floating-brand--meta {
+  right: -10%;
+  top: 6%;
+  animation-delay: -1.2s;
+}
+
+.floating-brand--tiktok {
+  left: -12%;
+  top: 42%;
+  animation-delay: -2.1s;
+}
+
+.floating-brand--chatgpt {
+  right: -12%;
+  top: 40%;
+  animation-delay: -0.6s;
+}
+
+.floating-brand--claude {
+  left: -6%;
+  bottom: 9%;
+  animation-delay: -2.8s;
+}
+
+.floating-brand--gemini {
+  right: -8%;
+  bottom: 7%;
+  animation-delay: -1.8s;
+}
+
+.floating-brand--ifood {
+  left: 40%;
+  bottom: -5%;
+  animation-delay: -3.2s;
 }
 
 .hero-visual__topbar {
@@ -433,7 +591,35 @@ a {
   }
 }
 
+@keyframes floatBadge {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 28px) rotate(-2deg);
+  }
+
+  50% {
+    transform: translate3d(0, -12px, 28px) rotate(2deg);
+  }
+}
+
+@media (max-width: 1023px) {
+  .hero-visual-slot {
+    width: 540px;
+  }
+}
+
 @media (max-width: 767px) {
+  .hero-section {
+    min-height: 100svh;
+    min-height: 100dvh;
+  }
+
+  .hero-visual-slot {
+    top: 46%;
+    width: min(292px, 84vw);
+    max-width: 84vw;
+  }
+
   .contact-button,
   .secondary-button,
   .live-button {
@@ -444,8 +630,56 @@ a {
     display: none;
   }
 
+  .hero-photo-frame,
   .hero-visual__device {
     inset: 8% 3% 6%;
+  }
+
+  .hero-photo-frame__overlay {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+  }
+
+  .floating-brand {
+    width: 44px;
+    height: 44px;
+    padding: 5px;
+  }
+
+  .floating-brand--google {
+    left: 2%;
+    top: 8%;
+  }
+
+  .floating-brand--meta {
+    right: 2%;
+    top: 8%;
+  }
+
+  .floating-brand--tiktok {
+    left: 0;
+    top: 40%;
+  }
+
+  .floating-brand--chatgpt {
+    right: 0;
+    top: 40%;
+  }
+
+  .floating-brand--claude {
+    left: 4%;
+    bottom: 10%;
+  }
+
+  .floating-brand--gemini {
+    right: 4%;
+    bottom: 8%;
+  }
+
+  .floating-brand--ifood {
+    left: 40%;
+    bottom: 2%;
   }
 
   .hero-visual__chart {
@@ -455,6 +689,14 @@ a {
   .project-card {
     position: relative;
     top: auto !important;
+  }
+}
+
+@media (max-width: 639px) {
+  .hero-visual-slot {
+    top: 44%;
+    width: min(280px, 82vw);
+    max-width: 82vw;
   }
 }
 
