@@ -11,7 +11,10 @@ import {
 } from "lucide-react";
 import {
   motion,
-  useMotionValueEvent,
+  MotionConfig,
+  MotionValue,
+  useMotionValue,
+  useReducedMotion,
   useScroll,
   useTransform,
 } from "framer-motion";
@@ -20,17 +23,14 @@ import {
   ElementType,
   ReactNode,
   useEffect,
-  useMemo,
   useRef,
-  useState,
 } from "react";
 
 const BRAND = {
   name: "Meu Portfolio",
   person: "Francisco Divino",
   handle: "@franciscodivinoo",
-  email: "contato@franciscodivino.com",
-  whatsapp: "https://wa.me/91984105852",
+  whatsapp: "https://wa.me/5591984105852",
 };
 
 const marqueeItems = [
@@ -227,6 +227,21 @@ type FadeInProps<T extends ElementType> = {
   y?: number;
 } & Omit<ComponentPropsWithoutRef<T>, "as" | "children" | "className">;
 
+// Cria cada componente motion.* uma única vez por tag. Criar dentro do render
+// geraria um componente novo a cada renderização e remontaria os filhos.
+const motionComponents = new Map<ElementType, ElementType>();
+
+function getMotionComponent(as: ElementType): ElementType {
+  let component = motionComponents.get(as);
+
+  if (!component) {
+    component = motion.create(as as Parameters<typeof motion.create>[0]) as ElementType;
+    motionComponents.set(as, component);
+  }
+
+  return component;
+}
+
 function FadeIn<T extends ElementType = "div">({
   as,
   children,
@@ -237,7 +252,7 @@ function FadeIn<T extends ElementType = "div">({
   y = 30,
   ...props
 }: FadeInProps<T>) {
-  const Component = motion(as || "div");
+  const Component = getMotionComponent(as || "div");
 
   return (
     <Component
@@ -263,58 +278,67 @@ function Magnet({
   strength?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const touchingRef = useRef(false);
-  const [style, setStyle] = useState({
-    transform: "translate3d(0, 0, 0)",
-    transition: "transform 0.6s ease-in-out",
-  });
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     const element = ref.current;
 
-    if (!element) {
+    if (!element || reduceMotion) {
       return;
     }
 
-    const reset = () => {
-      setStyle({
-        transform: "translate3d(0, 0, 0)",
-        transition: "transform 0.6s ease-in-out",
-      });
+    // Escreve o transform direto no elemento (sem estado do React) para não
+    // re-renderizar o hero a cada movimento do ponteiro.
+    let touching = false;
+    let active = false;
+    let frame = 0;
+
+    const setTransform = (x: number, y: number, transition: string) => {
+      element.style.transition = transition;
+      element.style.transform = `translate3d(${x}px, ${y}px, 0)`;
     };
 
-    const applyPointer = (clientX: number, clientY: number) => {
-      const rect = element.getBoundingClientRect();
-      const isInside =
-        clientX > rect.left - padding &&
-        clientX < rect.right + padding &&
-        clientY > rect.top - padding &&
-        clientY < rect.bottom + padding;
-
-      if (!isInside) {
-        reset();
+    const reset = () => {
+      if (!active) {
         return;
       }
 
-      const x = (clientX - (rect.left + rect.width / 2)) / strength;
-      const y = (clientY - (rect.top + rect.height / 2)) / strength;
+      active = false;
+      setTransform(0, 0, "transform 0.6s ease-in-out");
+    };
 
-      setStyle({
-        transform: `translate3d(${x}px, ${y}px, 0)`,
-        transition: "transform 0.3s ease-out",
+    const applyPointer = (clientX: number, clientY: number) => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const rect = element.getBoundingClientRect();
+        const isInside =
+          clientX > rect.left - padding &&
+          clientX < rect.right + padding &&
+          clientY > rect.top - padding &&
+          clientY < rect.bottom + padding;
+
+        if (!isInside) {
+          reset();
+          return;
+        }
+
+        active = true;
+        setTransform(
+          (clientX - (rect.left + rect.width / 2)) / strength,
+          (clientY - (rect.top + rect.height / 2)) / strength,
+          "transform 0.3s ease-out",
+        );
       });
     };
 
     const handleMouseMove = (event: MouseEvent) => {
-      if (touchingRef.current) {
-        return;
+      if (!touching) {
+        applyPointer(event.clientX, event.clientY);
       }
-
-      applyPointer(event.clientX, event.clientY);
     };
 
-    const handleTouchStart = (event: TouchEvent) => {
-      touchingRef.current = true;
+    const handleTouch = (event: TouchEvent) => {
+      touching = true;
       const touch = event.touches[0];
 
       if (touch) {
@@ -322,43 +346,32 @@ function Magnet({
       }
     };
 
-    const handleTouchMove = (event: TouchEvent) => {
-      const touch = event.touches[0];
-
-      if (!touch) {
-        return;
-      }
-
-      event.preventDefault();
-      applyPointer(touch.clientX, touch.clientY);
-    };
-
     const handleTouchEnd = () => {
-      touchingRef.current = false;
+      touching = false;
+      cancelAnimationFrame(frame);
       reset();
     };
 
+    // Listeners de toque passivos e touch-action: pan-y no CSS: a foto reage
+    // ao dedo, mas a rolagem vertical da página continua funcionando.
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    element.addEventListener("touchstart", handleTouchStart, { passive: true });
-    element.addEventListener("touchmove", handleTouchMove, { passive: false });
+    element.addEventListener("touchstart", handleTouch, { passive: true });
+    element.addEventListener("touchmove", handleTouch, { passive: true });
     element.addEventListener("touchend", handleTouchEnd);
     element.addEventListener("touchcancel", handleTouchEnd);
 
     return () => {
+      cancelAnimationFrame(frame);
       window.removeEventListener("mousemove", handleMouseMove);
-      element.removeEventListener("touchstart", handleTouchStart);
-      element.removeEventListener("touchmove", handleTouchMove);
+      element.removeEventListener("touchstart", handleTouch);
+      element.removeEventListener("touchmove", handleTouch);
       element.removeEventListener("touchend", handleTouchEnd);
       element.removeEventListener("touchcancel", handleTouchEnd);
     };
-  }, [padding, strength]);
+  }, [padding, strength, reduceMotion]);
 
   return (
-    <div
-      ref={ref}
-      className="magnet-root"
-      style={{ ...style, willChange: "transform" }}
-    >
+    <div ref={ref} className="magnet-root">
       {children}
     </div>
   );
@@ -397,12 +410,14 @@ function FloatingBrandBadge({
   className: string;
 }) {
   return (
-    <div
-      className={`floating-brand floating-brand--${className}`}
-      title={label}
-      aria-label={label}
-    >
-      <img className="floating-brand__icon" src={image} alt="" />
+    <div className={`floating-brand floating-brand--${className}`} title={label}>
+      <img
+        className="floating-brand__icon"
+        src={image}
+        alt={label}
+        width={50}
+        height={50}
+      />
     </div>
   );
 }
@@ -416,22 +431,29 @@ function HeroVisual() {
         <FloatingBrandBadge key={brand.label} {...brand} />
       ))}
       <div className="hero-photo-frame">
-        <img
-          className="hero-photo-frame__image"
-          src="/visuals/francisco-divino.jpg"
-          alt="Retrato de Francisco Divino"
-        />
+        <picture className="block h-full w-full">
+          <source srcSet="/visuals/francisco-divino.avif" type="image/avif" />
+          <img
+            className="hero-photo-frame__image"
+            src="/visuals/francisco-divino.jpg"
+            alt="Retrato de Francisco Divino"
+            width={1024}
+            height={1536}
+            // React 18 só repassa o atributo em minúsculas.
+            {...{ fetchpriority: "high" }}
+          />
+        </picture>
         <div className="hero-photo-frame__overlay">
           <span>Francisco Divino</span>
           <strong>Marketing + IA + Sistemas</strong>
         </div>
       </div>
       <div className="hero-visual__badge hero-visual__badge--left">
-        <Megaphone size={20} />
+        <Megaphone size={20} aria-hidden="true" />
         IA + Marketing
       </div>
       <div className="hero-visual__badge hero-visual__badge--right">
-        <BarChart3 size={20} />
+        <BarChart3 size={20} aria-hidden="true" />
         Apps e sistemas
       </div>
     </div>
@@ -451,7 +473,7 @@ function HeroSection() {
           <a
             key={label}
             href={href}
-            className="transition-opacity duration-200 hover:opacity-70"
+            className="-my-3 py-3 transition-opacity duration-200 hover:opacity-70"
           >
             {label}
           </a>
@@ -477,10 +499,10 @@ function HeroSection() {
         </div>
       </FadeIn>
 
-      <div className="relative z-30 mt-auto flex items-end justify-between gap-6 px-6 pb-7 sm:pb-8 md:px-10 md:pb-10">
+      <div className="relative z-30 mt-auto flex flex-col items-start gap-5 px-6 pb-7 sm:flex-row sm:items-end sm:justify-between sm:gap-6 sm:pb-8 md:px-10 md:pb-10">
         <FadeIn
           as="p"
-          className="max-w-[190px] text-xs font-light uppercase leading-snug tracking-wide text-[#D7E2EA] sm:max-w-[260px] sm:text-sm md:max-w-[330px] md:text-xl"
+          className="max-w-[300px] text-xs font-light uppercase leading-snug tracking-wide text-[#D7E2EA] sm:max-w-[260px] sm:text-sm md:max-w-[330px] md:text-xl"
           delay={0.35}
           y={20}
         >
@@ -499,17 +521,22 @@ function MetricTile({
   title,
   metric,
   image,
+  hidden = false,
 }: {
   title: string;
   metric: string;
   image: string;
+  hidden?: boolean;
 }) {
+  // As cópias repetidas da faixa ficam escondidas dos leitores de tela.
   return (
-    <div className="marquee-card">
+    <div className="marquee-card" aria-hidden={hidden || undefined}>
       <img
         className="h-[148px] w-full rounded-2xl object-cover"
         src={image}
-        alt={`Visual de ${title}`}
+        alt=""
+        width={384}
+        height={148}
         loading="lazy"
       />
       <div className="mt-5 flex items-end justify-between gap-5">
@@ -517,44 +544,52 @@ function MetricTile({
           <p className="text-xs uppercase tracking-[0.28em] text-[#D7E2EA]/55">
             {title}
           </p>
-          <h3 className="mt-2 text-3xl font-black uppercase leading-none text-[#D7E2EA]">
+          <p className="mt-2 text-3xl font-black uppercase leading-none text-[#D7E2EA]">
             {metric}
-          </h3>
+          </p>
         </div>
-        <Layers3 className="text-[#D7E2EA]/60" size={30} />
+        <Layers3 className="text-[#D7E2EA]/60" size={30} aria-hidden="true" />
       </div>
     </div>
   );
 }
 
+const firstRow = marqueeItems.slice(0, 6);
+const secondRow = marqueeItems.slice(6);
+const tripledFirst = [...firstRow, ...firstRow, ...firstRow];
+const tripledSecond = [...secondRow, ...secondRow, ...secondRow];
+
 function MarqueeSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const [offset, setOffset] = useState(0);
-  const firstRow = marqueeItems.slice(0, 6);
-  const secondRow = marqueeItems.slice(6);
-  const tripledFirst = useMemo(() => [...firstRow, ...firstRow, ...firstRow], [firstRow]);
-  const tripledSecond = useMemo(
-    () => [...secondRow, ...secondRow, ...secondRow],
-    [secondRow],
-  );
+  const reduceMotion = useReducedMotion();
+  // Motion value atualiza o transform direto no DOM, sem re-renderizar os
+  // 36 cards a cada evento de rolagem.
+  const x = useMotionValue(-200);
+  const reverseX = useMotionValue(200);
 
   useEffect(() => {
-    const handleScroll = () => {
+    const update = () => {
       const section = sectionRef.current;
 
       if (!section) {
         return;
       }
 
-      const sectionTop = section.offsetTop;
-      const nextOffset = (window.scrollY - sectionTop + window.innerHeight) * 0.3;
-      setOffset(nextOffset);
+      const offset = reduceMotion
+        ? 0
+        : (window.scrollY - section.offsetTop + window.innerHeight) * 0.3 - 200;
+      x.set(offset);
+      reverseX.set(-offset);
     };
 
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [reduceMotion, x, reverseX]);
 
   return (
     <section
@@ -563,66 +598,83 @@ function MarqueeSection() {
       aria-label="Resultados e canais"
     >
       <div className="flex flex-col gap-3">
-        <div
-          className="flex gap-3"
-          style={{
-            transform: `translateX(${offset - 200}px)`,
-            willChange: "transform",
-          }}
-        >
+        <motion.div className="flex gap-3" style={{ x, willChange: "transform" }}>
           {tripledFirst.map((item, index) => (
-            <MetricTile key={`${item.title}-${index}`} {...item} />
+            <MetricTile
+              key={`${item.title}-${index}`}
+              {...item}
+              hidden={index >= firstRow.length}
+            />
           ))}
-        </div>
-        <div
+        </motion.div>
+        <motion.div
           className="flex gap-3"
-          style={{
-            transform: `translateX(${-1 * (offset - 200)}px)`,
-            willChange: "transform",
-          }}
+          style={{ x: reverseX, willChange: "transform" }}
         >
           {tripledSecond.map((item, index) => (
-            <MetricTile key={`${item.title}-${index}`} {...item} />
+            <MetricTile
+              key={`${item.title}-${index}`}
+              {...item}
+              hidden={index >= secondRow.length}
+            />
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
 }
 
+function AnimatedCharacter({
+  character,
+  progress,
+  start,
+  end,
+}: {
+  character: string;
+  progress: MotionValue<number>;
+  start: number;
+  end: number;
+}) {
+  const opacity = useTransform(progress, [start, end], [0.2, 1]);
+
+  return <motion.span style={{ opacity }}>{character}</motion.span>;
+}
+
 function AnimatedText({ text }: { text: string }) {
   const ref = useRef<HTMLParagraphElement>(null);
+  const reduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start 0.8", "end 0.2"],
   });
-  const [progress, setProgress] = useState(0);
+  const className =
+    "mx-auto max-w-[720px] text-center text-base font-medium leading-relaxed text-[#D7E2EA] sm:text-xl md:text-[1.35rem]";
 
-  useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    setProgress(latest);
-  });
+  if (reduceMotion) {
+    return (
+      <p ref={ref} className={className}>
+        {text}
+      </p>
+    );
+  }
 
+  // Cada letra tem a própria opacidade ligada à rolagem por motion value (sem
+  // re-render). O texto inteiro fica num span só para leitores de tela, que
+  // assim não soletram letra por letra.
   return (
-    <p
-      ref={ref}
-      className="mx-auto max-w-[720px] text-center text-base font-medium leading-relaxed text-[#D7E2EA] sm:text-xl md:text-[1.35rem]"
-    >
-      {text.split("").map((character, index) => {
-        const start = index / text.length;
-        const end = (index + 14) / text.length;
-        const opacity =
-          progress <= start
-            ? 0.2
-            : progress >= end
-              ? 1
-              : 0.2 + ((progress - start) / (end - start)) * 0.8;
-
-        return (
-          <span key={`${character}-${index}`} style={{ opacity }}>
-            {character}
-          </span>
-        );
-      })}
+    <p ref={ref} className={className}>
+      <span className="sr-only">{text}</span>
+      <span aria-hidden="true">
+        {text.split("").map((character, index) => (
+          <AnimatedCharacter
+            key={index}
+            character={character}
+            progress={scrollYProgress}
+            start={index / text.length}
+            end={(index + 14) / text.length}
+          />
+        ))}
+      </span>
     </p>
   );
 }
@@ -643,7 +695,7 @@ function DecorativeToken({
       y={0}
       x={className.includes("right") ? 80 : -80}
     >
-      <Icon size={34} strokeWidth={1.8} />
+      <Icon size={34} strokeWidth={1.8} aria-hidden="true" />
       <span>{label}</span>
     </FadeIn>
   );
@@ -866,9 +918,6 @@ function ContactSection() {
           </p>
           <div className="flex flex-wrap gap-4">
             <ContactButton label="Chamar Francisco" />
-            <a className="secondary-button" href={`mailto:${BRAND.email}`}>
-              {BRAND.email}
-            </a>
           </div>
         </FadeIn>
       </div>
@@ -881,7 +930,7 @@ function ContactSection() {
           target="_blank"
           rel="noreferrer"
         >
-          <Instagram size={16} /> {BRAND.handle}
+          <Instagram size={16} aria-hidden="true" /> {BRAND.handle}
         </a>
       </footer>
     </section>
@@ -890,13 +939,17 @@ function ContactSection() {
 
 export default function App() {
   return (
-    <main className="min-h-screen overflow-x-clip bg-[#0C0C0C] font-kanit">
-      <HeroSection />
-      <MarqueeSection />
-      <AboutSection />
-      <ServicesSection />
-      <ProjectsSection />
-      <ContactSection />
-    </main>
+    // reducedMotion="user": quem pede menos movimento no sistema vê só os
+    // fades, sem deslocamentos.
+    <MotionConfig reducedMotion="user">
+      <main className="min-h-screen overflow-x-clip bg-[#0C0C0C] font-kanit">
+        <HeroSection />
+        <MarqueeSection />
+        <AboutSection />
+        <ServicesSection />
+        <ProjectsSection />
+        <ContactSection />
+      </main>
+    </MotionConfig>
   );
 }

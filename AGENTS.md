@@ -1,6 +1,10 @@
 # Francisco Divino — Portfolio
 
-Landing page em Vite + React 18 + TypeScript + Tailwind 3 + Framer Motion. Todo o conteúdo fica em `src/App.tsx`; imagens em `public/visuals/`. Deploy na Vercel (`vercel.json` reescreve tudo para `index.html`). Não usa variáveis de ambiente nem segredos.
+Landing page em Vite + React 18 + TypeScript + Tailwind 3 + Framer Motion. Todo o conteúdo fica em `src/App.tsx`; imagens em `public/visuals/`. Deploy na Vercel (`vercel.json` só define cache longo para `/assets/`). Não usa variáveis de ambiente nem segredos.
+
+- A foto do topo existe em `francisco-divino.avif` (usada pela maioria dos navegadores) e `.jpg` (alternativa): ao trocar a foto, atualize as duas.
+- Prévia de compartilhamento: `public/og-image.jpg` (1200×630) e as tags `og:*` no `index.html`. Ícones: `public/favicon.svg` e `public/apple-touch-icon.png`.
+- Animações ligadas à rolagem usam motion values do Framer (sem `setState` por evento) e respeitam "reduzir movimento" do sistema.
 
 ## Comandos
 
